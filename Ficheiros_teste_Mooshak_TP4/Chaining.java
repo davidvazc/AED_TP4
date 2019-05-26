@@ -2,9 +2,9 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 
 class Carro {
-     int matricula;
-     String smatricula;
-     int divida;
+    int matricula;
+    String smatricula;
+    int divida;
     public Carro proximo;
 
     public Carro(String s, int divida) {
@@ -12,20 +12,22 @@ class Carro {
         this.smatricula = s;
         for (int i = 0; i < 6; ++i) {
             char ch = s.charAt(i);
-            aux += (int) ch * (6 - i) * 100;
+            aux += (int) ch * (6 - i) * 999;
         }
         this.matricula = aux;
         this.divida = divida;
-        
+
     }
 
     public int getMatricula() {
         return matricula;
     }
-    public String getSMatricula(){
+
+    public String getSMatricula() {
         return smatricula;
     }
-    public int getDivida(){
+
+    public int getDivida() {
         return divida;
     }
 
@@ -46,7 +48,8 @@ class ListaOrdenada {
         Carro anterior = null; // comeca no primeiro
         Carro atual = primeiro;
         // vai ate ao fim da lista ou o atual for maior que a key
-        while (atual != null && key.compareTo(atual.getSMatricula())>0) {
+
+        while (atual != null && key.compareTo(atual.getSMatricula()) > 0) {
             anterior = atual;
             atual = atual.proximo; // vai para o seguinte
         }
@@ -73,14 +76,34 @@ class ListaOrdenada {
             anterior.proximo = atual.proximo; // remove atual link
     }
 
-    public Carro encontra(int key) {
+    public Carro encontra(String s) {
+        int aux = 0;
+        for (int i = 0; i < 6; ++i) {
+            char ch = s.charAt(i);
+            aux += (int) ch * (6 - i) * 999;
+        }
+        int key = aux;
         Carro atual = primeiro;
         while (atual != null && atual.getMatricula() <= key) { // or key too small,
-            if (atual.getMatricula() == key) // found, return link
+            if (atual.getMatricula() == key) { // found, return link
                 return atual;
+            }
             atual = atual.proximo; // go to proximo item
         }
         return null; // cannot encontra it
+    }
+
+    public Carro addDivida(int key, int divida) {
+        Carro atual = primeiro;
+        while (atual != null && atual.getMatricula() <= key) { // or key too small,
+            if (atual.getMatricula() == key) { // found, return link
+                atual.divida = atual.divida + divida;
+                return atual;
+            }
+            atual = atual.proximo; // go to proximo item
+        }
+        return null; // cannot encontra it
+
     }
 
     public void displayList() {
@@ -131,13 +154,24 @@ public class Chaining {
         int aux = 0;
         for (int i = 0; i < 6; ++i) {
             char ch = s.charAt(i);
-            aux += (int) ch * (6 - i) * 100;
+            aux += (int) ch * (6 - i) * 999;
         }
         int key = aux;
         int hashVal = hashFunc(key); // hash the key
-        Carro theLink = hashArray[hashVal].encontra(key); // get link
+        Carro theLink = hashArray[hashVal].encontra(s); // get link
         return theLink;
-    }   
+    }
+
+    public void addDivida(String s, int divida) {
+        int aux = 0;
+        for (int i = 0; i < 6; ++i) {
+            char ch = s.charAt(i);
+            aux += (int) ch * (6 - i) * 999;
+        }
+        int key = aux;
+        int hashVal = hashFunc(key); // hash the key
+        hashArray[hashVal].addDivida(key, divida); // get link
+    }
 
     public static void main(String[] args) throws IOException {
         Carro dataItem;
@@ -149,87 +183,89 @@ public class Chaining {
         int divida;
         StringTokenizer st;
 
-        do{
+        do {
             input = readLn();
             assert input != null;
             st = new StringTokenizer(input.trim());
             comando = st.nextToken();
             switch (comando) {
-                case "PORTICO": {
-                    matricula = st.nextToken();
-                    divida = Integer.parseInt(st.nextToken());
+            case "PORTICO": {
+                matricula = st.nextToken();
+                divida = Integer.parseInt(st.nextToken());
+                if (hashTable.encontra(matricula) == null) {
+
                     Carro carro = new Carro(matricula, divida);
 
                     hashTable.add(carro);
 
-
                     if (carro.divida == 0) {
                         hashTable.remove(carro.matricula);
                     }
-
+                    System.out.println("nao existia");
+                    break;
+                } else {
+                    hashTable.addDivida(matricula, divida);
+                    System.out.println("existia");
                     break;
                 }
-                case "PAGAMENTO": {
-                    matricula = st.nextToken();
-                    divida = Integer.parseInt(st.nextToken());
-                    Carro carro = new Carro(matricula, divida*-1);
 
-                    hashTable.add(carro);
-                        if (carro.divida == 0) {
-                            hashTable.remove(carro.matricula);
-                        }
+            }
+            case "PAGAMENTO": {
+                matricula = st.nextToken();
+                divida = Integer.parseInt(st.nextToken());
+                Carro carro = new Carro(matricula, divida * -1);
 
-                    break;
+                hashTable.add(carro);
+                if (carro.divida == 0) {
+                    hashTable.remove(carro.matricula);
                 }
-                case "SALDO": {
-                    matricula = st.nextToken();
-                    Carro carro = hashTable.encontra(matricula);
 
-                    if (carro == null) {
-                        System.out.println(matricula + " SEM REGISTO");
-                    } else {
-                        System.out.println(matricula + " VALOR EM DIVIDA " + carro.divida);
-                    }
+                break;
+            }
+            case "SALDO": {
+                matricula = st.nextToken();
+                Carro carro = hashTable.encontra(matricula);
 
-                    break;
+                if (carro == null || carro.divida == 0) {
+                    System.out.println(matricula + " SEM REGISTO");
+                } else {
+                    System.out.println(matricula + " VALOR EM DIVIDA " + carro.divida);
                 }
-                case "LISTA":
+
+                break;
+            }
+            case "LISTA":
                 hashTable.displayTable();
 
-                    break;
+                break;
 
-
-                case "TERMINA":
-                    return;
+            case "TERMINA":
+                return;
             }
 
-        }while(true);
-
+        } while (true);
 
     }
 
-    private static String readLn(){
+    private static String readLn() {
         byte[] lin = new byte[200];
         int lg = 0, car = -1;
 
-        try{
-            while(lg < 200){
+        try {
+            while (lg < 200) {
                 car = System.in.read();
-                if((car < 0 ) || (car == '\n'))
+                if ((car < 0) || (car == '\n'))
                     break;
                 lin[lg++] += car;
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             return (null);
         }
 
-        if((car < 0) && (lg == 0))
+        if ((car < 0) && (lg == 0))
             return null;
 
-        return (new String (lin, 0, lg));
-
+        return (new String(lin, 0, lg));
 
     }
 }
-
