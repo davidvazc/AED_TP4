@@ -94,12 +94,12 @@ class ListaOrdenada {
     }
 }
 
-public class Chaining {
+public class LinearProbing {
     private ListaOrdenada[] hashArray;
 
     private int arraySize;
 
-    public Chaining(int size) {
+    public LinearProbing(int size) {
         arraySize = size;
         hashArray = new ListaOrdenada[arraySize];
         int i;
