@@ -1,126 +1,110 @@
-import java.util.Scanner;
+import java.io.IOException;
 
-/** Class LinearProbingHashTable **/
-class LinearProbingHashTable {
-    private int maxSize;
-    private String[] keys;
-    private String[] vals;
+public class HashTable {
+    private DataItem[] hashArray;
 
-    /** Constructor **/
-    public LinearProbingHashTable(int capacity) {
-        maxSize = capacity;
-        keys = new String[maxSize];
-        vals = new String[maxSize];
+    private int arraySize;
+
+    private DataItem bufItem; // for deleted items
+
+    public HashTable(int size) {
+        arraySize = size;
+        hashArray = new DataItem[arraySize];
+        bufItem = new DataItem(-1); // deleted item key is -1
     }
 
-    /** Fucntion to check if hash table contains a key **/
-    public boolean contains(String key) {
-        return get(key) != null;
-    }
-
-    /** Functiont to get hash code of a given key **/
-    private int hash(String key) {
-        return key.hashCode() % maxSize;
-    }
-
-    /** Function to insert key-value pair **/
-    public void insert(String key, String val) {
-        int tmp = hash(key);
-        int i = tmp;
-        do {
-            if (keys[i] == null) {
-                keys[i] = key;
-                vals[i] = val;
-                return;
-            }
-            if (keys[i].equals(key)) {
-                vals[i] = val;
-                return;
-            }
-            i = (i + 1) % maxSize;
-        } while (i != tmp);
-    }
-
-    /** Function to get value for a given key **/
-    public String get(String key) {
-        int i = hash(key);
-        while (keys[i] != null) {
-            if (keys[i].equals(key))
-                return vals[i];
-            i = (i + 1) % maxSize;
+    public void displayTable() {
+        System.out.print("Table: ");
+        for (int j = 0; j < arraySize; j++) {
+            if (hashArray[j] != null)
+                System.out.print(hashArray[j].getKey() + " ");
+            else
+                System.out.print("#");
         }
-        return null;
+        System.out.println("");
     }
 
-    /** Function to remove key and its value **/
-    public void remove(String key) {
-        if (!contains(key))
-            return;
+    public int hashFunction(int key) {
+        return key % arraySize;
+    }
 
-        /** find position key and delete **/
-        int i = hash(key);
-        while (!key.equals(keys[i]))
-            i = (i + 1) % maxSize;
-        keys[i] = vals[i] = null;
-
-        /** rehash all keys **/
-        for (i = (i + 1) % maxSize; keys[i] != null; i = (i + 1) % maxSize) {
-            String tmp1 = keys[i], tmp2 = vals[i];
-            keys[i] = vals[i] = null;
-            insert(tmp1, tmp2);
+    public void insert(DataItem item) {
+        int key = item.getKey();
+        int hashVal = hashFunction(key); // hash the key
+        // until empty cell or -1,
+        while (hashArray[hashVal] != null && hashArray[hashVal].getKey() != -1) {
+            ++hashVal; // go to next cell
+            hashVal %= arraySize; // wraparound if necessary
         }
+        hashArray[hashVal] = item; // insert item
     }
 
-    /** Function to print HashTable **/
-    public void printHashTable() {
-        System.out.println("\nHash Table: ");
-        for (int i = 0; i < maxSize; i++)
-            if (keys[i] != null)
-                System.out.println(keys[i] + " " + vals[i]);
-        System.out.println();
+    public DataItem delete(int key) {
+        int hashVal = hashFunction(key);
+
+        while (hashArray[hashVal] != null) // until empty cell,
+        {
+            if (hashArray[hashVal].getKey() == key) {
+                DataItem temp = hashArray[hashVal]; // save item
+                hashArray[hashVal] = bufItem; // delete item
+                return temp;
+            }
+            ++hashVal; // go to next cell
+            hashVal %= arraySize; // wraparound if necessary
+        }
+        return null; // can't find item
+    }
+
+    public DataItem find(int key) // find item with key
+    {
+        int hashVal = hashFunction(key); // hash the key
+
+        while (hashArray[hashVal] != null) // until empty cell,
+        {
+            if (hashArray[hashVal].getKey() == key)
+                return hashArray[hashVal]; // found, return item
+            ++hashVal; // go to next cell
+            hashVal %= arraySize; // wraparound if necessary
+        }
+        return null; // can't find item
+    }
+
+    public static void main(String[] args) throws IOException {
+        DataItem aDataItem;
+        int aKey, size, initSize, keysPerCell;
+
+        size = 150;
+        initSize = 100;
+        keysPerCell = 10;
+        HashTable theHashTable = new HashTable(size);
+
+        for (int j = 0; j < initSize; j++) {
+            aKey = (int) (java.lang.Math.random() * keysPerCell * size);
+            aDataItem = new DataItem(aKey);
+            theHashTable.insert(aDataItem);
+        }
+
+        theHashTable.displayTable();
+        aDataItem = new DataItem(100);
+        theHashTable.insert(aDataItem);
+
+        theHashTable.delete(100);
+        aDataItem = theHashTable.find(100);
+        if (aDataItem != null) {
+            System.out.println("Found " + 100);
+        } else
+            System.out.println("Could not find " + 100);
     }
 }
 
-/** Class LinearProbingHashTableTest **/
-public class LinearProbingHashTableTest {
-    public static void main(String[] args) {
-        Scanner scan = new Scanner(System.in);
-        System.out.println("Hash Table Test\n\n");
-        System.out.println("Enter size");
-        /** maxSizeake object of LinearProbingHashTable **/
-        LinearProbingHashTable lpht = new LinearProbingHashTable(scan.nextInt());
+class DataItem {
+    private int data;
 
-        char ch;
-        /** Perform LinearProbingHashTable operations **/
-        do {
-            System.out.println("\nHash Table Operations\n");
-            System.out.println("1. insert ");
-            System.out.println("2. remove");
-            System.out.println("3. get");
+    public DataItem(int d) {
+        data = d;
+    }
 
-            int choice = scan.nextInt();
-            switch (choice) {
-            case 1:
-                System.out.println("Enter key and value");
-                lpht.insert(scan.next(), scan.next());
-                break;
-            case 2:
-                System.out.println("Enter key");
-                lpht.remove(scan.next());
-                break;
-            case 3:
-                System.out.println("Enter key");
-                System.out.println("Value = " + lpht.get(scan.next()));
-                break;
-            default:
-                System.out.println("Wrong Entry \n ");
-                break;
-            }
-            /** Display hash table **/
-            lpht.printHashTable();
-
-            System.out.println("\nDo you want to continue (Type y or n) \n");
-            ch = scan.next().charAt(0);
-        } while (ch == 'Y' || ch == 'y');
+    public int getKey() {
+        return data;
     }
 }
